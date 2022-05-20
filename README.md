@@ -17,7 +17,7 @@ https://www.docker.com/get-started/
 
 ## Usage
 
-1. Run server: `application.py`
+1. Run server: `./application.py`
 1. Run unit tests: `python3 -m unittest discover .`
 
 ## Design considerations
