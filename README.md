@@ -17,7 +17,7 @@ https://www.docker.com/get-started/
 
 ## Usage
 
-1. Run server: `python3 application.py sample_drivers.txt sample_destinations.txt`
+1. Run server: `application.py`
 1. Run unit tests: `python3 -m unittest discover .`
 
 ## Design considerations
