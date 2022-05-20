@@ -8,12 +8,11 @@ RUN apk update
 RUN apk upgrade
 RUN apk add bash
 
-WORKDIR /application
+WORKDIR /code
 
-COPY . .
+COPY ./requirements.txt /code/requirements.txt
+RUN pip install --no-cache-dir --upgrade -r /code/requirements.txt
 
-# TODO:
-# port/expose stuff...
+COPY ./app /code/app
 
-# TODO:
-# run application server...
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
