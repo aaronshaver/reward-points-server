@@ -2,14 +2,8 @@ import uuid
 import json
 from uuid import UUID
 from .points import Points
+from .encoder_helpers import UUIDEncoder
 
-
-class UUIDEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, UUID):
-            # if the obj is uuid, we simply return the value of uuid
-            return str(obj)
-        return json.JSONEncoder.default(self, obj)
 
 class User:
 
