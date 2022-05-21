@@ -29,3 +29,16 @@ def get_users_userid(user_id: str):
             status_code=404,
             detail="user not found"
         )
+
+@app.get("/users/{user_id}/points", status_code=200)
+def get_users_userid_points(user_id: str):
+    """
+    -returns a Points object for a given user_id
+    """
+    if user_id in users:
+        return users[user_id].points
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail="user not found"
+        )
