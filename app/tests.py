@@ -1,5 +1,7 @@
 import unittest
 
+from app.main import get_users_new
+
 
 class Tests(unittest.TestCase):
 
@@ -7,6 +9,7 @@ class Tests(unittest.TestCase):
     def setUp(self):
         pass
 
-    # test category
-    def test_stuff(self):
-        self.assertEqual('stuff', 'stuff')
+    # users tests
+    def test_get_users_new_has_uuid(self):
+        response = get_users_new()
+        self.assertEqual(36, len(str(response.user_id)))
