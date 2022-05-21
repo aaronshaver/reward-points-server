@@ -22,7 +22,7 @@ class Tests(unittest.TestCase):
     def test_get_users_userid_nonexistent_user_expect_404(self):
         user_id = uuid.uuid4()
         with self.assertRaises(Exception) as context:
-            response2 = get_users_userid(str(user_id))
+            get_users_userid(str(user_id))
         ex = context.exception
         self.assertEqual(404, ex.status_code)
         self.assertEqual('user not found', ex.detail)
