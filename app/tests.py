@@ -1,7 +1,7 @@
 from http.client import HTTPException
 import unittest
 
-from app.main import users, post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions
+from app.main import users, post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions, post_users_userid_points
 from app.transaction import Transaction
 from points import Points
 import uuid
@@ -97,3 +97,28 @@ class Tests(unittest.TestCase):
         payer_points = all_payer_points['foo corp']
 
         self.assertEqual(200, payer_points)
+
+    # spend tests
+
+    def test_post_users_userid_points_simple_spend_all(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer_name='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2.payer_points
+        payer_points = all_payer_points['foo corp']
+        self.assertEqual(100, payer_points)
+
+        post_users_userid_points(user_id, 100)
+
+        response3 = get_users_userid_points(user_id)
+        all_payer_points = response3.payer_points
+        payer_points = all_payer_points['foo corp']
+        self.assertEqual(0, payer_points)

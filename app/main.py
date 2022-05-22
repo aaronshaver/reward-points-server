@@ -82,3 +82,16 @@ def get_users_userid_transactions(user_id: str):
             status_code=404,
             detail="user not found"
         )
+
+@app.post("/users/{user_id}/points", status_code=200)
+def post_users_userid_points(user_id: str, amount: int):
+    """
+    -spends the number of points requested for the user_id
+    """
+    if user_id in users:
+        pass
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail="user not found"
+        )
