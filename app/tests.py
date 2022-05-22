@@ -4,9 +4,7 @@ import unittest
 from app.main import users, post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions, post_users_userid_points
 from app.spend_request import SpendRequest
 from app.transaction import Transaction
-from points import Points
 import uuid
-import json
 
 
 class Tests(unittest.TestCase):
@@ -178,6 +176,27 @@ class Tests(unittest.TestCase):
         all_payer_points = response3.payer_points
         payer_points1 = all_payer_points['foo corp']
         self.assertEqual(50, payer_points1)
+
+    def test_post_users_userid_points_response_body_has_output(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer_name='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2.payer_points
+        payer_points = all_payer_points['foo corp']
+        self.assertEqual(100, payer_points)
+
+        spend_request = SpendRequest(points=100)
+        response3 = post_users_userid_points(user_id, spend_request)
+        self.assertEqual('foo corp', response3[0]['payer'])
+        self.assertEqual(-100, response3[0]['points'])
 
     def test_post_users_userid_points_refuse_to_spend_overage(self):
         response = post_users()

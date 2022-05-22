@@ -100,12 +100,21 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
         transactions = users[user_id].points.transactions
         transaction1 = transactions[0]
 
-        spent_amounts = {}
         payer_name = transaction1.payer_name
-        spent_amounts[payer_name] = spend_request.points
-        del transactions[0]
+        spent_amounts = []
+
+        payer_spend = {}
+        payer_spend['payer'] = payer_name
+        payer_spend['points'] = spend_request.points * -1
+        spent_amounts.append(payer_spend)
+        # entire transaction spent
+        if spend_request.points == transactions[0].points:
+            del transactions[0]
+        else:
+            transactions[0].points -= spend_request.points
         existing_amount = users[user_id].points.payer_points[payer_name]
         users[user_id].points.payer_points[payer_name] -= spend_request.points
+        return spent_amounts
     else:
         raise HTTPException(
             status_code=404,

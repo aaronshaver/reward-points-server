@@ -54,3 +54,7 @@ Workflow example:
 * If I did this project over again, I would do it using a database. It would be
 really nice to be able to use SQL to do stuff like: `SELECT SUM(points) FROM
  transactions WHERE payer_id = 1 AND user_id = 'uuid' ORDER BY timestamp`
+* The exercise document didn't specify what to do in case of trying to spend
+ more points than were available for the user, so I went with the conservative
+ approach of not allowing that kind of spend request to succeed (you'll get a
+ 400 bad request and points will remain unspent if you try)
