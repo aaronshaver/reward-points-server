@@ -6,6 +6,7 @@ from fastapi import FastAPI, HTTPException
 from app.points import Points
 from .user import User
 from .transaction import Transaction
+from .spend_request import SpendRequest
 
 
 app = FastAPI()
@@ -84,13 +85,13 @@ def get_users_userid_transactions(user_id: str):
         )
 
 @app.post("/users/{user_id}/points", status_code=200)
-def post_users_userid_points(user_id: str, amount: int):
+def post_users_userid_points(user_id: str, spend_request: SpendRequest):
     """
-    -spends the number of points requested for the user_id
+    -spends the number of points requested for the user_id, if possible
     """
     if user_id in users:
         total_points_available = sum(users[user_id].points.payer_points.values())
-        if amount > total_points_available:
+        if spend_request.points > total_points_available:
             raise HTTPException(
                 status_code=400,
                 detail="spend aborted: not enough points available"
@@ -101,10 +102,10 @@ def post_users_userid_points(user_id: str, amount: int):
 
         spent_amounts = {}
         payer_name = transaction1.payer_name
-        spent_amounts[payer_name] = amount
+        spent_amounts[payer_name] = spend_request.points
         del transactions[0]
         existing_amount = users[user_id].points.payer_points[payer_name]
-        users[user_id].points.payer_points[payer_name] -= amount
+        users[user_id].points.payer_points[payer_name] -= spend_request.points
     else:
         raise HTTPException(
             status_code=404,

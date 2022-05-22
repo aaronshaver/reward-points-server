@@ -2,6 +2,7 @@ from http.client import HTTPException
 import unittest
 
 from app.main import users, post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions, post_users_userid_points
+from app.spend_request import SpendRequest
 from app.transaction import Transaction
 from points import Points
 import uuid
@@ -98,7 +99,6 @@ class Tests(unittest.TestCase):
         self.assertEqual(200, payer_points)
 
     # spend tests
-
     def test_post_users_userid_points_simple_spend_all(self):
         response = post_users()
         user_id = response.user_id
@@ -115,7 +115,8 @@ class Tests(unittest.TestCase):
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
-        post_users_userid_points(user_id, 100)
+        spend_request = SpendRequest(points=100)
+        post_users_userid_points(user_id, spend_request)
 
         response3 = get_users_userid_points(user_id)
         all_payer_points = response3.payer_points
@@ -144,7 +145,8 @@ class Tests(unittest.TestCase):
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
-        post_users_userid_points(user_id, 100)  # spend
+        spend_request = SpendRequest(points=100)
+        post_users_userid_points(user_id, spend_request)
 
         response3 = get_users_userid_points(user_id)
         all_payer_points = response3.payer_points
@@ -169,7 +171,8 @@ class Tests(unittest.TestCase):
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
-        post_users_userid_points(user_id, 50)  # spend
+        spend_request = SpendRequest(points=50)
+        post_users_userid_points(user_id, spend_request)
 
         response3 = get_users_userid_points(user_id)
         all_payer_points = response3.payer_points
@@ -192,8 +195,9 @@ class Tests(unittest.TestCase):
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
+        spend_request = SpendRequest(points=200)
         with self.assertRaises(Exception) as context:
-            post_users_userid_points(user_id, 200)  # spend
+            post_users_userid_points(user_id, spend_request)
         ex = context.exception
         self.assertEqual(400, ex.status_code)
         self.assertEqual(
