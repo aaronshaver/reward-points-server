@@ -2,6 +2,7 @@ from http.client import HTTPException
 import unittest
 
 from app.main import users, post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions
+from app.transaction import Transaction
 from points import Points
 import uuid
 import json
@@ -45,19 +46,19 @@ class Tests(unittest.TestCase):
         response = post_users()
         user_id = response.user_id
 
-        transaction = {}
-        transaction['payer_name'] = 'foo corp'
-        transaction['points'] = 100
-        transaction['timestamp'] = '2022-05-05T05:05:05Z'
-        transaction_json = json.dumps(transaction)
-        post_users_userid_transactions(user_id, transaction_json)
+        transaction = Transaction(
+            payer_name='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
 
         response2 = get_users_userid_points(user_id)
         all_transactions = response2.transactions
         payer_transactions = all_transactions['foo corp']
 
-        self.assertEqual(100, payer_transactions[0]['points'])
+        self.assertEqual(100, payer_transactions[0].points)
         self.assertEqual(
             '2022-05-05T05:05:05Z',
-            payer_transactions[0]['timestamp']
+            payer_transactions[0].timestamp
         )
