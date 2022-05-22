@@ -38,3 +38,13 @@ install Postman and create a user by sending a POST to `localhost/users/new` as
  new REST framework so I decided to learn it
 * It didn't feel right not having users in the system, so I implemented
  rudimentary user creation/retrieval logic
+* Initially I thought the problem was simple enough, and I'd try to keep things
+ simple, by using plain Python objects for everything. Partway through, I
+ realized using a database (even something lightweight like SQLite) and a basic
+ ORM would have made things MUCH easier, particularly sorting and filtering
+ transactions. It would be a case of "use slightly more tooling and make
+ infrastructure slightly more complicated to get big gains in developer
+ efficiency".
+* If I did this project over again, I would do it using a database. It would be
+really nice to be able to use SQL to do stuff like: `SELECT SUM(points) FROM
+ transactions WHERE payer_id = 1 AND user_id = 'uuid'`
