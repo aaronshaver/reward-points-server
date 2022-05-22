@@ -55,12 +55,11 @@ class Tests(unittest.TestCase):
 
         response2 = get_users_userid_points(user_id)
         all_transactions = response2.transactions
-        payer_transactions = all_transactions['foo corp']
 
-        self.assertEqual(100, payer_transactions[0].points)
+        self.assertEqual(100, all_transactions[0].points)
         self.assertEqual(
             '2022-05-05T05:05:05Z',
-            payer_transactions[0].timestamp
+            all_transactions[0].timestamp
         )
 
     def test_post_users_transactions_has_payer_points(self):
@@ -122,3 +121,87 @@ class Tests(unittest.TestCase):
         all_payer_points = response3.payer_points
         payer_points = all_payer_points['foo corp']
         self.assertEqual(0, payer_points)
+
+    def test_post_users_userid_points_only_spend_1_of_2_payers(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer_name='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer_name='bar corp',
+            points=200,
+            timestamp='2022-05-05T05:05:06Z'  # later
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2.payer_points
+        payer_points = all_payer_points['foo corp']
+        self.assertEqual(100, payer_points)
+
+        post_users_userid_points(user_id, 100)  # spend
+
+        response3 = get_users_userid_points(user_id)
+        all_payer_points = response3.payer_points
+        payer_points1 = all_payer_points['foo corp']
+        self.assertEqual(0, payer_points1)
+        payer_points2 = all_payer_points['bar corp']
+        self.assertEqual(200, payer_points2)
+
+    def test_post_users_userid_points_partial_spend_one_payer(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer_name='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2.payer_points
+        payer_points = all_payer_points['foo corp']
+        self.assertEqual(100, payer_points)
+
+        post_users_userid_points(user_id, 50)  # spend
+
+        response3 = get_users_userid_points(user_id)
+        all_payer_points = response3.payer_points
+        payer_points1 = all_payer_points['foo corp']
+        self.assertEqual(50, payer_points1)
+
+    def test_post_users_userid_points_refuse_to_spend_overage(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer_name='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2.payer_points
+        payer_points = all_payer_points['foo corp']
+        self.assertEqual(100, payer_points)
+
+        with self.assertRaises(Exception) as context:
+            post_users_userid_points(user_id, 200)  # spend
+        ex = context.exception
+        self.assertEqual(400, ex.status_code)
+        self.assertEqual(
+            'spend aborted: not enough points available',
+            ex.detail
+        )
+
+        response3 = get_users_userid_points(user_id)
+        all_payer_points = response3.payer_points
+        payer_points = all_payer_points['foo corp']
+        self.assertEqual(100, payer_points)

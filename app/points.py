@@ -8,4 +8,4 @@ class Points:
         self.payer_points = defaultdict(lambda: 0)
 
         # [Transaction]
-        self.transactions = defaultdict(lambda: [])
+        self.transactions = []

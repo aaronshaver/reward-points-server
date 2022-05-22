@@ -56,7 +56,7 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
     """
     if user_id in users:
         payer_name = transaction.payer_name
-        users[user_id].points.transactions[payer_name].append(transaction)
+        users[user_id].points.transactions.append(transaction)
 
         existing_points_total = users[user_id].points.payer_points[payer_name]
         users[user_id].points.payer_points[payer_name] = existing_points_total \
@@ -89,7 +89,22 @@ def post_users_userid_points(user_id: str, amount: int):
     -spends the number of points requested for the user_id
     """
     if user_id in users:
-        pass
+        total_points_available = sum(users[user_id].points.payer_points.values())
+        if amount > total_points_available:
+            raise HTTPException(
+                status_code=400,
+                detail="spend aborted: not enough points available"
+            )
+
+        transactions = users[user_id].points.transactions
+        transaction1 = transactions[0]
+
+        spent_amounts = {}
+        payer_name = transaction1.payer_name
+        spent_amounts[payer_name] = amount
+        del transactions[0]
+        existing_amount = users[user_id].points.payer_points[payer_name]
+        users[user_id].points.payer_points[payer_name] -= amount
     else:
         raise HTTPException(
             status_code=404,
