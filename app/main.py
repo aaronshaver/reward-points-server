@@ -7,8 +7,8 @@ app = FastAPI()
 users = {}
 
 
-@app.post("/users/new", status_code=201)
-def get_users_new():
+@app.post("/users", status_code=201)
+def post_users():
     """
     -Creates and returns a new User
     -POST because operation creates a resource, is not idempotent

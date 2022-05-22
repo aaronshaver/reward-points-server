@@ -28,9 +28,15 @@ and then do: `docker run -it rewardpoints /bin/bash` to run them inside the
 
 ## API usage
 
-1. Use the API like a standard HTTP REST web server. For example, you can
-install Postman and create a user by sending a POST to `localhost/users/new` as
- long as the container is running using the steps above.
+Use the API like a standard HTTP REST web server. For example, you can
+install Postman and use it to do requests.
+
+Workflow example:
+
+1. and create a user by sending a POST to `localhost/users` (make sure the
+ container is running using the steps above)
+1. ....................
+1. ....................
 
 ## Design considerations
 
@@ -47,4 +53,4 @@ install Postman and create a user by sending a POST to `localhost/users/new` as
  efficiency".
 * If I did this project over again, I would do it using a database. It would be
 really nice to be able to use SQL to do stuff like: `SELECT SUM(points) FROM
- transactions WHERE payer_id = 1 AND user_id = 'uuid'`
+ transactions WHERE payer_id = 1 AND user_id = 'uuid' ORDER BY timestamp`
