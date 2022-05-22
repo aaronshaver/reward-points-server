@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from re import U
 from fastapi import FastAPI, HTTPException
 
 from app.points import Points
@@ -56,6 +57,11 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
     if user_id in users:
         payer_name = transaction.payer_name
         users[user_id].points.transactions[payer_name].append(transaction)
+
+        existing_points_total = users[user_id].points.payer_points[payer_name]
+        users[user_id].points.payer_points[payer_name] = existing_points_total \
+            + transaction.points
+
         return transaction
     else:
         raise HTTPException(
@@ -67,8 +73,7 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
 def get_users_userid_transactions(user_id: str):
     """
     -returns transactions for a given user_id
-    -probably will not be used in the app itself; however, useful for Postman
-    manual testing
+    -not used in the app itself; however, useful for Postman manual testing
     """
     if user_id in users:
         return users[user_id].points.transactions
