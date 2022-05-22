@@ -1,4 +1,5 @@
 import json
+from uuid import UUID
 
 
 class UUIDEncoder(json.JSONEncoder):
