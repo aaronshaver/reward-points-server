@@ -7,7 +7,6 @@ from .user import User
 from .transaction import Transaction
 from .spend_request import SpendRequest
 
-
 app = FastAPI()
 users = {}
 
@@ -57,6 +56,7 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
     -accepts JSON body transaction and creates transaction resources in the
     system, updating points values as needed
     """
+    payer = transaction.payer
     if user_id not in users:
         raise HTTPException(
             status_code=404,
@@ -67,58 +67,22 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
             status_code=400,
             detail="unsupported points amount in Transaction"
         )
+    if users[user_id].payer_points[payer] + transaction.points < 0:
+        raise HTTPException(
+            status_code=400,
+            detail="transaction aborted: negative transaction would result in" +
+            " negative total points"
+        )
 
-    payer = transaction.payer
+    users[user_id].transactions.append(transaction)
+    # sort in-place by timestamp asc. after adding the latest transaction
+    users[user_id].transactions.sort(key=lambda x: x.timestamp)
 
-    # adding points to user's balance
-    if transaction.points > 0:
-        users[user_id].transactions.append(transaction)
-        # sort in-place by timestamp asc. after adding the latest transaction
-        users[user_id].transactions.sort(key=lambda x: x.timestamp)
+    existing_points_total = users[user_id].payer_points[payer]
+    users[user_id].payer_points[payer] = existing_points_total \
+        + transaction.points
 
-        existing_points_total = users[user_id].payer_points[payer]
-        users[user_id].payer_points[payer] = existing_points_total \
-            + transaction.points
-
-        return transaction
-
-    # subtracing points from user's balance
-    else:
-        points_available = users[user_id].payer_points[payer]
-        if points_available + transaction.points < 0:
-            raise HTTPException(
-                status_code=400,
-                detail="negative transaction aborted: not enough points available"
-            )
-        payer_transactions = [x for x in users[user_id].transactions
-                              if x.payer == payer]
-        left_to_deduct = transaction.points * -1
-        transactions_to_delete = []
-        for old_transaction in payer_transactions:
-            if left_to_deduct == 0:
-                break
-            # if old_transaction.timestamp < transaction.timestamp:
-            # deduct all points from this transaction
-            if left_to_deduct >= old_transaction.points:
-                left_to_deduct -= old_transaction.points
-                transactions_to_delete.append(old_transaction)
-            # deduct partial points from this transaction
-            else:
-                old_transaction.points -= left_to_deduct
-                left_to_deduct = 0
-        if left_to_deduct > 0:
-            raise HTTPException(
-                status_code=400,
-                detail="negative transaction aborted: not enough points "
-            )
-
-        for to_delete in transactions_to_delete:
-            users[user_id].transactions.remove(to_delete)
-
-        # remember transaction.points is negative in this case
-        users[user_id].payer_points[payer] = points_available + transaction.points
-
-        return transaction
+    return transaction
 
 
 @app.post("/users/{user_id}/points", status_code=200)
@@ -144,7 +108,29 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
             detail="spend aborted: not enough points available"
         )
 
-    # core logic
+    # clean up negative transactions before dealing with positive transactions
+    transactions = users[user_id].transactions
+    transactions_to_delete = []
+    for i, transaction in enumerate(transactions):
+        if transaction.points < 0:
+            left_to_deduct = transaction.points * -1
+            j = i - 1
+            while left_to_deduct > 0:
+                if transactions[j].payer == transaction.payer:
+                    # older transaction had more than enough points
+                    if transactions[j].points >= left_to_deduct:
+                        transactions[j].points -= left_to_deduct
+                        break
+                    # total deduction of this transaction, and still need more
+                    else:
+                        transactions_to_delete.append(transactions[j])
+                        left_to_deduct -= transactions[j].points
+                j -= 1
+            transactions_to_delete.append(transaction)
+    for to_delete in transactions_to_delete:
+        users[user_id].transactions.remove(to_delete)
+
+    # now do actual spending where there's only positive transactions left
     left_to_spend = spend_request.points
     transactions = users[user_id].transactions
     payer_spends = []
@@ -175,11 +161,11 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
         existing_payer = [x for x in spent_amounts if x['payer'] ==
                           payer_spend['payer']]
         if existing_payer:
-            existing_payer['points'] -= payer_spend['points']
+            existing_payer[0]['points'] += payer_spend['points']
         else:
             spent_amounts.append({'payer': payer_spend['payer'],
                                   'points': payer_spend['points']})
-        # subtract amount spent from a payer total for the user
+        # subtract amount spent from a "payer spend total" for the user
         existing_amount = users[user_id].payer_points[payer_spend['payer']]
         users[user_id].payer_points[payer_spend['payer']] = \
             existing_amount + payer_spend['points']

@@ -1,6 +1,8 @@
 import unittest
 
-from app.main import get_users_userid_transactions, post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions, post_users_userid_points
+from app.main import get_users_userid_transactions, post_users, \
+    get_users_userid, get_users_userid_points, post_users_userid_transactions, \
+    post_users_userid_points
 from app.spend_request import SpendRequest
 from app.transaction import Transaction
 import uuid
@@ -122,7 +124,7 @@ class Tests(unittest.TestCase):
 
         response3 = get_users_userid_transactions(user_id)
         all_transactions = response3
-        self.assertEqual(0, len(all_transactions))
+        self.assertEqual(2, len(all_transactions))
 
     def test_post_users_transactions_reject_negative_trans_if_low_points(self):
         response = post_users()
@@ -145,7 +147,7 @@ class Tests(unittest.TestCase):
         ex = context.exception
         self.assertEqual(400, ex.status_code)
         self.assertEqual(
-            'negative transaction aborted: not enough points available',
+            'transaction aborted: negative transaction would result in negative total points',
             ex.detail
         )
 
@@ -179,7 +181,7 @@ class Tests(unittest.TestCase):
 
         response3 = get_users_userid_transactions(user_id)
         all_transactions = response3
-        self.assertEqual(0, len(all_transactions))
+        self.assertEqual(3, len(all_transactions))
 
     def test_post_users_transactions_negative_transaction_partial_deduct(self):
         response = post_users()
@@ -211,7 +213,7 @@ class Tests(unittest.TestCase):
 
         response3 = get_users_userid_transactions(user_id)
         all_transactions = response3
-        self.assertEqual(1, len(all_transactions))
+        self.assertEqual(3, len(all_transactions))
 
     # spend tests
 
@@ -405,3 +407,80 @@ class Tests(unittest.TestCase):
         all_payer_points = response2
         self.assertEqual(0, all_payer_points['aaron corp'])
         self.assertEqual(100, all_payer_points['shaver corp'])
+
+    def test_post_users_userid_points_spend_with_negative_out_of_order(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer='A corp',
+            points=1000,
+            timestamp='2022-11-02T14:00:00Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='A corp',
+            points=-200,
+            timestamp='2022-10-31T15:00:00Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='A corp',
+            points=300,
+            timestamp='2022-10-31T10:00:00Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        spend_request = SpendRequest(points=1100)
+        response = post_users_userid_points(user_id, spend_request)
+
+        for payer_spend in response:
+            self.assertEqual('A corp', payer_spend['payer'])
+            self.assertEqual(-1100, payer_spend['points'])
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2
+        self.assertEqual(0, all_payer_points['A corp'])
+
+    def test_post_users_userid_pts_spend_w_negative_out_of_ord_more_payers(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer='A corp',
+            points=1000,
+            timestamp='2022-11-02T14:00:00Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='B corp',
+            points=200,
+            timestamp='2022-10-31T11:00:00Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='A corp',
+            points=-200,
+            timestamp='2022-10-31T15:00:00Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='A corp',
+            points=300,
+            timestamp='2022-10-31T10:00:00Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        spend_request = SpendRequest(points=1300)
+        response = post_users_userid_points(user_id, spend_request)
+
+        for payer_spend in response:
+            if payer_spend['payer'] == 'A corp':
+                self.assertEqual(-1100, payer_spend['points'])
+            if payer_spend['payer'] == 'B corp':
+                self.assertEqual(-200, payer_spend['points'])
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2
+        self.assertEqual(0, all_payer_points['A corp'])
+        self.assertEqual(0, all_payer_points['B corp'])
