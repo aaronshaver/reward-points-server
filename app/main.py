@@ -21,6 +21,7 @@ def post_users():
     users[str(user.user_id)] = user
     return user
 
+
 @app.get("/users/{user_id}", status_code=200)
 def get_users_userid(user_id: str):
     """
@@ -34,6 +35,7 @@ def get_users_userid(user_id: str):
             detail="user not found"
         )
 
+
 @app.get("/users/{user_id}/points", status_code=200)
 def get_users_userid_points(user_id: str):
     """
@@ -46,6 +48,7 @@ def get_users_userid_points(user_id: str):
             status_code=404,
             detail="user not found"
         )
+
 
 @app.post("/users/{user_id}/transactions", status_code=201)
 def post_users_userid_transactions(user_id: str, transaction: Transaction):
@@ -77,9 +80,18 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
             + transaction.points
 
         return transaction
+
     # subtracing points from user's balance
     else:
-        pass
+        points_available = users[user_id].payer_points[payer]
+        if points_available + transaction.points < 0:
+            raise HTTPException(
+                status_code=400,
+                detail="negative transaction aborted: not enough points available"
+            )
+        # all_transactions = users[user_id].transactions
+        # payer_transactions =
+        return transaction
 
 
 @app.get("/users/{user_id}/transactions", status_code=200)
@@ -95,6 +107,7 @@ def get_users_userid_transactions(user_id: str):
             status_code=404,
             detail="user not found"
         )
+
 
 @app.post("/users/{user_id}/points", status_code=200)
 def post_users_userid_points(user_id: str, spend_request: SpendRequest):
@@ -147,13 +160,13 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
 
     spent_amounts = []
     for payer_spend in payer_spends:
-        existing_payer = [x for x in spent_amounts if x['payer'] == \
-            payer_spend['payer']]
+        existing_payer = [x for x in spent_amounts if x['payer'] ==
+                          payer_spend['payer']]
         if existing_payer:
             existing_payer['points'] -= payer_spend['points']
         else:
-            spent_amounts.append({'payer': payer_spend['payer'], \
-                'points': payer_spend['points']})
+            spent_amounts.append({'payer': payer_spend['payer'],
+                                  'points': payer_spend['points']})
         # subtract amount spent from a payer total for the user
         existing_amount = users[user_id].payer_points[payer_spend['payer']]
         users[user_id].payer_points[payer_spend['payer']] = \
