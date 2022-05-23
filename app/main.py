@@ -88,9 +88,7 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
         if points_available + transaction.points < 0:
             raise HTTPException(
                 status_code=400,
-                detail="negative transaction aborted: not enough points " +
-                "available and / or negative transaction was older than " +
-                "existing transactions"
+                detail="negative transaction aborted: not enough points available"
             )
         payer_transactions = [x for x in users[user_id].transactions
                               if x.payer == payer]
@@ -99,24 +97,24 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
         for old_transaction in payer_transactions:
             if left_to_deduct == 0:
                 break
-            if old_transaction.timestamp < transaction.timestamp:
-                # deduct all points from this transaction
-                if left_to_deduct >= old_transaction.points:
-                    left_to_deduct -= old_transaction.points
-                    transactions_to_delete.append(old_transaction)
-                # deduct partial points from this transaction
-                else:
-                    old_transaction.points -= left_to_deduct
-                    left_to_deduct = 0
+            # if old_transaction.timestamp < transaction.timestamp:
+            # deduct all points from this transaction
+            if left_to_deduct >= old_transaction.points:
+                left_to_deduct -= old_transaction.points
+                transactions_to_delete.append(old_transaction)
+            # deduct partial points from this transaction
+            else:
+                old_transaction.points -= left_to_deduct
+                left_to_deduct = 0
         if left_to_deduct > 0:
             raise HTTPException(
                 status_code=400,
-                detail="negative transaction aborted: not enough points " +
-                "available and / or negative transaction was older than " +
-                "existing transactions"
+                detail="negative transaction aborted: not enough points "
             )
+
         for to_delete in transactions_to_delete:
             users[user_id].transactions.remove(to_delete)
+
         # remember transaction.points is negative in this case
         users[user_id].payer_points[payer] = points_available + transaction.points
 
