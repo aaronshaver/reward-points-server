@@ -92,6 +92,7 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
     """
     -spends the number of points requested for the user_id, if possible
     """
+    # error handling
     if user_id not in users:
         raise HTTPException(
             status_code=404,
@@ -109,6 +110,7 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
             detail="spend aborted: not enough points available"
         )
 
+    # core logic
     left_to_spend = spend_request.points
     transactions = users[user_id].points.transactions
     payer_spends = []
@@ -143,6 +145,7 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
         else:
             spent_amounts.append({'payer': payer_spend['payer'], \
                 'points': payer_spend['points']})
+        # subtract amount spent from a payer total for the user
         existing_amount = users[user_id].points.payer_points[payer_spend['payer']]
         users[user_id].points.payer_points[payer_spend['payer']] = \
             existing_amount + payer_spend['points']
