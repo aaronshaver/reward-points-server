@@ -33,8 +33,8 @@ install Postman and use it to do requests.
 
 Workflow example:
 
-1. and create a user by sending a POST to `localhost/users` (make sure the
- container is running using the steps above)
+1. create a user by sending a POST to `localhost/users` (make sure the
+ container is running first, using the steps above!)
 1. ....................
 1. ....................
 

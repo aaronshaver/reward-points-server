@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 
-from re import U
 from fastapi import FastAPI, HTTPException
 
-from app.points import Points
 from .user import User
 from .transaction import Transaction
 from .spend_request import SpendRequest
@@ -42,7 +40,7 @@ def get_users_userid_points(user_id: str):
     -returns a Points object for a given user_id
     """
     if user_id in users:
-        return users[user_id].points
+        return users[user_id]
     else:
         raise HTTPException(
             status_code=404,
@@ -58,12 +56,12 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
     if user_id in users:
         payer = transaction.payer
 
-        users[user_id].points.transactions.append(transaction)
+        users[user_id].transactions.append(transaction)
         # sort in-place by timestamp asc. after adding the latest transaction
-        users[user_id].points.transactions.sort(key=lambda x: x.timestamp)
+        users[user_id].transactions.sort(key=lambda x: x.timestamp)
 
-        existing_points_total = users[user_id].points.payer_points[payer]
-        users[user_id].points.payer_points[payer] = existing_points_total \
+        existing_points_total = users[user_id].payer_points[payer]
+        users[user_id].payer_points[payer] = existing_points_total \
             + transaction.points
 
         return transaction
@@ -80,7 +78,7 @@ def get_users_userid_transactions(user_id: str):
     -not used in the app itself; however, useful for Postman manual testing
     """
     if user_id in users:
-        return users[user_id].points.transactions
+        return users[user_id].transactions
     else:
         raise HTTPException(
             status_code=404,
@@ -103,7 +101,7 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
             status_code=400,
             detail="unsupported points spending amount; please spend 1 point or more"
         )
-    total_points_available = sum(users[user_id].points.payer_points.values())
+    total_points_available = sum(users[user_id].payer_points.values())
     if spend_request.points > total_points_available:
         raise HTTPException(
             status_code=400,
@@ -112,7 +110,7 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
 
     # core logic
     left_to_spend = spend_request.points
-    transactions = users[user_id].points.transactions
+    transactions = users[user_id].transactions
     payer_spends = []
     transactions_to_delete = []
     for transaction in transactions:
@@ -134,7 +132,7 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
         payer_spend['points'] = spend_deduction * -1
         payer_spends.append(payer_spend)
     for transaction in transactions_to_delete:
-        users[user_id].points.transactions.remove(transaction)
+        users[user_id].transactions.remove(transaction)
 
     spent_amounts = []
     for payer_spend in payer_spends:
@@ -146,8 +144,8 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
             spent_amounts.append({'payer': payer_spend['payer'], \
                 'points': payer_spend['points']})
         # subtract amount spent from a payer total for the user
-        existing_amount = users[user_id].points.payer_points[payer_spend['payer']]
-        users[user_id].points.payer_points[payer_spend['payer']] = \
+        existing_amount = users[user_id].payer_points[payer_spend['payer']]
+        users[user_id].payer_points[payer_spend['payer']] = \
             existing_amount + payer_spend['points']
 
     return spent_amounts

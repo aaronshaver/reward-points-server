@@ -1,7 +1,6 @@
-from http.client import HTTPException
 import unittest
 
-from app.main import users, post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions, post_users_userid_points
+from app.main import post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions, post_users_userid_points
 from app.spend_request import SpendRequest
 from app.transaction import Transaction
 import uuid
@@ -31,13 +30,15 @@ class Tests(unittest.TestCase):
 
     def test_post_users_has_points_attribute(self):
         response = post_users()
-        self.assertTrue(response.points)
+        self.assertTrue(response)
 
-    def test_get_users_userid_points_returns_points_object(self):
+    def test_get_users_userid_points_returns_proper_object(self):
         response = post_users()
         user_id = response.user_id
         response2 = get_users_userid_points(user_id)
-        self.assertEqual('Points', response2.__class__.__name__)
+        self.assertEqual('User', response2.__class__.__name__)
+        self.assertIsNotNone(response.payer_points)
+        self.assertIsNotNone(response.transactions)
 
     # transactions tests
 
