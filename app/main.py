@@ -51,11 +51,23 @@ def get_users_userid_points(user_id: str):
 def post_users_userid_transactions(user_id: str, transaction: Transaction):
     """
     -accepts JSON body transaction and creates transaction resources in the
-    system
+    system, updating points values as needed
     """
-    if user_id in users:
-        payer = transaction.payer
+    if user_id not in users:
+        raise HTTPException(
+            status_code=404,
+            detail="user not found"
+        )
+    if transaction.points == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="unsupported points amount in Transaction"
+        )
 
+    payer = transaction.payer
+
+    # adding points to user's balance
+    if transaction.points > 0:
         users[user_id].transactions.append(transaction)
         # sort in-place by timestamp asc. after adding the latest transaction
         users[user_id].transactions.sort(key=lambda x: x.timestamp)
@@ -65,11 +77,10 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
             + transaction.points
 
         return transaction
+    # subtracing points from user's balance
     else:
-        raise HTTPException(
-            status_code=404,
-            detail="user not found"
-        )
+        pass
+
 
 @app.get("/users/{user_id}/transactions", status_code=200)
 def get_users_userid_transactions(user_id: str):
