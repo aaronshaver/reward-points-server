@@ -259,3 +259,32 @@ class Tests(unittest.TestCase):
                 self.assertEqual(-100, payer_spend['points'])
             elif payer_spend['payer'] == 'bar corp':
                 self.assertEqual(-50, payer_spend['points'])
+
+    def test_post_users_userid_points_spend_older_transaction_first(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer='shaver corp',
+            points=100,
+            timestamp='2022-05-05T05:05:06Z'  # later
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='aaron corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        spend_request = SpendRequest(points=100)
+        response = post_users_userid_points(user_id, spend_request)
+
+        for payer_spend in response:
+            self.assertEqual('aaron corp', payer_spend['payer'])
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2.payer_points
+        self.assertEqual(0, all_payer_points['aaron corp'])
+        self.assertEqual(100, all_payer_points['shaver corp'])
+

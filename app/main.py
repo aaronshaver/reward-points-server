@@ -57,7 +57,10 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
     """
     if user_id in users:
         payer = transaction.payer
+
         users[user_id].points.transactions.append(transaction)
+        # sort in-place by timestamp asc. after adding the latest transaction
+        users[user_id].points.transactions.sort(key=lambda x: x.timestamp)
 
         existing_points_total = users[user_id].points.payer_points[payer]
         users[user_id].points.payer_points[payer] = existing_points_total \
@@ -93,6 +96,11 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
         raise HTTPException(
             status_code=404,
             detail="user not found"
+        )
+    if spend_request.points < 1:
+        raise HTTPException(
+            status_code=400,
+            detail="unsupported points spending amount; please spend 1 point or more"
         )
     left_to_spend = spend_request.points
     total_points_available = sum(users[user_id].points.payer_points.values())
