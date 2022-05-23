@@ -2,6 +2,6 @@ from pydantic import BaseModel
 
 
 class Transaction(BaseModel):
-    payer_name: str
+    payer: str
     points: int
     timestamp: str

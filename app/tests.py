@@ -46,7 +46,7 @@ class Tests(unittest.TestCase):
         user_id = response.user_id
 
         transaction = Transaction(
-            payer_name='foo corp',
+            payer='foo corp',
             points=100,
             timestamp='2022-05-05T05:05:05Z'
         )
@@ -66,7 +66,7 @@ class Tests(unittest.TestCase):
         user_id = response.user_id
 
         transaction = Transaction(
-            payer_name='foo corp',
+            payer='foo corp',
             points=100,
             timestamp='2022-05-05T05:05:05Z'
         )
@@ -83,7 +83,7 @@ class Tests(unittest.TestCase):
         user_id = response.user_id
 
         transaction = Transaction(
-            payer_name='foo corp',
+            payer='foo corp',
             points=100,
             timestamp='2022-05-05T05:05:05Z'
         )
@@ -102,7 +102,7 @@ class Tests(unittest.TestCase):
         user_id = response.user_id
 
         transaction = Transaction(
-            payer_name='foo corp',
+            payer='foo corp',
             points=100,
             timestamp='2022-05-05T05:05:05Z'
         )
@@ -126,13 +126,13 @@ class Tests(unittest.TestCase):
         user_id = response.user_id
 
         transaction = Transaction(
-            payer_name='foo corp',
+            payer='foo corp',
             points=100,
             timestamp='2022-05-05T05:05:05Z'
         )
         post_users_userid_transactions(user_id, transaction)
         transaction = Transaction(
-            payer_name='bar corp',
+            payer='bar corp',
             points=200,
             timestamp='2022-05-05T05:05:06Z'  # later
         )
@@ -158,7 +158,7 @@ class Tests(unittest.TestCase):
         user_id = response.user_id
 
         transaction = Transaction(
-            payer_name='foo corp',
+            payer='foo corp',
             points=100,
             timestamp='2022-05-05T05:05:05Z'
         )
@@ -182,7 +182,7 @@ class Tests(unittest.TestCase):
         user_id = response.user_id
 
         transaction = Transaction(
-            payer_name='foo corp',
+            payer='foo corp',
             points=100,
             timestamp='2022-05-05T05:05:05Z'
         )
@@ -203,7 +203,7 @@ class Tests(unittest.TestCase):
         user_id = response.user_id
 
         transaction = Transaction(
-            payer_name='foo corp',
+            payer='foo corp',
             points=100,
             timestamp='2022-05-05T05:05:05Z'
         )
@@ -228,3 +228,34 @@ class Tests(unittest.TestCase):
         all_payer_points = response3.payer_points
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
+
+    def test_post_users_userid_points_full_spend_payer1_partial_2(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer='aaron corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='shaver corp',
+            points=400,
+            timestamp='2022-05-05T05:05:06Z'  # later
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        spend_request = SpendRequest(points=150)
+        response = post_users_userid_points(user_id, spend_request)
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2.payer_points
+        self.assertEqual(0, all_payer_points['aaron corp'])
+        self.assertEqual(350, all_payer_points['shaver corp'])
+
+        for payer_spend in response:
+            if payer_spend['payer'] == 'foo corp':
+                self.assertEqual(-100, payer_spend['points'])
+            elif payer_spend['payer'] == 'bar corp':
+                self.assertEqual(-50, payer_spend['points'])
