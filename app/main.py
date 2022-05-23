@@ -88,8 +88,9 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
         if points_available + transaction.points < 0:
             raise HTTPException(
                 status_code=400,
-                detail="negative transaction aborted: not enough points "
-                "available"
+                detail="negative transaction aborted: not enough points " +
+                "available and / or negative transaction was older than " +
+                "existing transactions"
             )
         payer_transactions = [x for x in users[user_id].transactions
                               if x.payer == payer]
@@ -107,8 +108,9 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
         if left_to_deduct > 0:
             raise HTTPException(
                 status_code=400,
-                detail="negative transaction aborted: not enough points "
-                "available"
+                detail="negative transaction aborted: not enough points " +
+                "available and / or negative transaction was older than " +
+                "existing transactions"
             )
         for to_delete in transactions_to_delete:
             users[user_id].transactions.remove(to_delete)
