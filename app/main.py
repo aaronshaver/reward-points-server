@@ -37,10 +37,10 @@ def get_users_userid(user_id: str):
 @app.get("/users/{user_id}/points", status_code=200)
 def get_users_userid_points(user_id: str):
     """
-    -returns a Points object for a given user_id
+    -returns a payer_points object for a given user_id
     """
     if user_id in users:
-        return users[user_id]
+        return users[user_id].payer_points
     else:
         raise HTTPException(
             status_code=404,
@@ -75,7 +75,7 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
 def get_users_userid_transactions(user_id: str):
     """
     -returns transactions for a given user_id
-    -not used in the app itself; however, useful for Postman manual testing
+    -not used in the app itself; however, useful for debugging
     """
     if user_id in users:
         return users[user_id].transactions

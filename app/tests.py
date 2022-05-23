@@ -1,6 +1,6 @@
 import unittest
 
-from app.main import post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions, post_users_userid_points
+from app.main import get_users_userid_transactions, post_users, get_users_userid, get_users_userid_points, post_users_userid_transactions, post_users_userid_points
 from app.spend_request import SpendRequest
 from app.transaction import Transaction
 import uuid
@@ -36,7 +36,7 @@ class Tests(unittest.TestCase):
         response = post_users()
         user_id = response.user_id
         response2 = get_users_userid_points(user_id)
-        self.assertEqual('User', response2.__class__.__name__)
+        self.assertEqual('defaultdict', response2.__class__.__name__)
         self.assertIsNotNone(response.payer_points)
         self.assertIsNotNone(response.transactions)
 
@@ -53,13 +53,14 @@ class Tests(unittest.TestCase):
         )
         post_users_userid_transactions(user_id, transaction)
 
-        response2 = get_users_userid_points(user_id)
-        all_transactions = response2.transactions
+        response2 = get_users_userid_transactions(user_id)
+        transaction = response2[0]
 
-        self.assertEqual(100, all_transactions[0].points)
+        self.assertEqual('foo corp', transaction.payer)
+        self.assertEqual(100, transaction.points)
         self.assertEqual(
             '2022-05-05T05:05:05Z',
-            all_transactions[0].timestamp
+            transaction.timestamp
         )
 
     def test_post_users_transactions_has_payer_points(self):
@@ -74,7 +75,7 @@ class Tests(unittest.TestCase):
         post_users_userid_transactions(user_id, transaction)
 
         response2 = get_users_userid_points(user_id)
-        all_payer_points = response2.payer_points
+        all_payer_points = response2
         payer_points = all_payer_points['foo corp']
 
         self.assertEqual(100, payer_points)
@@ -92,7 +93,7 @@ class Tests(unittest.TestCase):
         post_users_userid_transactions(user_id, transaction)
 
         response2 = get_users_userid_points(user_id)
-        all_payer_points = response2.payer_points
+        all_payer_points = response2
         payer_points = all_payer_points['foo corp']
 
         self.assertEqual(200, payer_points)
@@ -110,7 +111,7 @@ class Tests(unittest.TestCase):
         post_users_userid_transactions(user_id, transaction)
 
         response2 = get_users_userid_points(user_id)
-        all_payer_points = response2.payer_points
+        all_payer_points = response2
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
@@ -118,7 +119,7 @@ class Tests(unittest.TestCase):
         post_users_userid_points(user_id, spend_request)
 
         response3 = get_users_userid_points(user_id)
-        all_payer_points = response3.payer_points
+        all_payer_points = response3
         payer_points = all_payer_points['foo corp']
         self.assertEqual(0, payer_points)
 
@@ -140,7 +141,7 @@ class Tests(unittest.TestCase):
         post_users_userid_transactions(user_id, transaction)
 
         response2 = get_users_userid_points(user_id)
-        all_payer_points = response2.payer_points
+        all_payer_points = response2
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
@@ -148,7 +149,7 @@ class Tests(unittest.TestCase):
         post_users_userid_points(user_id, spend_request)
 
         response3 = get_users_userid_points(user_id)
-        all_payer_points = response3.payer_points
+        all_payer_points = response3
         payer_points1 = all_payer_points['foo corp']
         self.assertEqual(0, payer_points1)
         payer_points2 = all_payer_points['bar corp']
@@ -166,7 +167,7 @@ class Tests(unittest.TestCase):
         post_users_userid_transactions(user_id, transaction)
 
         response2 = get_users_userid_points(user_id)
-        all_payer_points = response2.payer_points
+        all_payer_points = response2
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
@@ -174,7 +175,7 @@ class Tests(unittest.TestCase):
         post_users_userid_points(user_id, spend_request)
 
         response3 = get_users_userid_points(user_id)
-        all_payer_points = response3.payer_points
+        all_payer_points = response3
         payer_points1 = all_payer_points['foo corp']
         self.assertEqual(50, payer_points1)
 
@@ -190,7 +191,7 @@ class Tests(unittest.TestCase):
         post_users_userid_transactions(user_id, transaction)
 
         response2 = get_users_userid_points(user_id)
-        all_payer_points = response2.payer_points
+        all_payer_points = response2
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
@@ -211,7 +212,7 @@ class Tests(unittest.TestCase):
         post_users_userid_transactions(user_id, transaction)
 
         response2 = get_users_userid_points(user_id)
-        all_payer_points = response2.payer_points
+        all_payer_points = response2
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
@@ -226,7 +227,7 @@ class Tests(unittest.TestCase):
         )
 
         response3 = get_users_userid_points(user_id)
-        all_payer_points = response3.payer_points
+        all_payer_points = response3
         payer_points = all_payer_points['foo corp']
         self.assertEqual(100, payer_points)
 
@@ -251,7 +252,7 @@ class Tests(unittest.TestCase):
         response = post_users_userid_points(user_id, spend_request)
 
         response2 = get_users_userid_points(user_id)
-        all_payer_points = response2.payer_points
+        all_payer_points = response2
         self.assertEqual(0, all_payer_points['aaron corp'])
         self.assertEqual(350, all_payer_points['shaver corp'])
 
@@ -285,7 +286,7 @@ class Tests(unittest.TestCase):
             self.assertEqual('aaron corp', payer_spend['payer'])
 
         response2 = get_users_userid_points(user_id)
-        all_payer_points = response2.payer_points
+        all_payer_points = response2
         self.assertEqual(0, all_payer_points['aaron corp'])
         self.assertEqual(100, all_payer_points['shaver corp'])
 

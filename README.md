@@ -60,3 +60,5 @@ really nice to be able to use SQL to do stuff like: `SELECT SUM(points) FROM
  more points than were available for the user, so I went with the conservative
  approach of not allowing that kind of spend request to succeed (you'll get a
  400 bad request and points will remain unspent if you try)
+* I wanted to do an immutable "Ledger" storage too, which you could use for
+ debugging, compliance, etc. but I'm not going to have time
