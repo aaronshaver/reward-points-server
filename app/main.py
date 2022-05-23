@@ -102,9 +102,12 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
             if old_transaction.timestamp < transaction.timestamp:
                 # deduct all points from this transaction
                 if left_to_deduct >= old_transaction.points:
-                    # spend_deduction = transaction_amount_available
                     left_to_deduct -= old_transaction.points
                     transactions_to_delete.append(old_transaction)
+                # deduct partial points from this transaction
+                else:
+                    old_transaction.points -= left_to_deduct
+                    left_to_deduct = 0
         if left_to_deduct > 0:
             raise HTTPException(
                 status_code=400,

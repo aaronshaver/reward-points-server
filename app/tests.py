@@ -206,6 +206,38 @@ class Tests(unittest.TestCase):
         all_transactions = response3
         self.assertEqual(0, len(all_transactions))
 
+    def test_post_users_transactions_negative_transaction_partial_deduct(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:06Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='foo corp',
+            points=-150,
+            timestamp='2022-05-05T05:05:07Z'  # later
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2
+        payer_points = all_payer_points['foo corp']
+        self.assertEqual(50, payer_points)
+
+        response3 = get_users_userid_transactions(user_id)
+        all_transactions = response3
+        self.assertEqual(1, len(all_transactions))
+
     # spend tests
 
     def test_post_users_userid_points_simple_spend_all(self):
