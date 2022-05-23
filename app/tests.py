@@ -121,7 +121,7 @@ class Tests(unittest.TestCase):
         self.assertEqual(0, payer_points)
 
         response3 = get_users_userid_transactions(user_id)
-        all_transactions = response2
+        all_transactions = response3
         self.assertEqual(0, len(all_transactions))
 
     def test_post_users_transactions_reject_negative_trans_if_low_points(self):
@@ -138,6 +138,31 @@ class Tests(unittest.TestCase):
             payer='foo corp',
             points=-200,
             timestamp='2022-05-05T05:05:06Z'  # later
+        )
+
+        with self.assertRaises(Exception) as context:
+            post_users_userid_transactions(user_id, transaction)
+        ex = context.exception
+        self.assertEqual(400, ex.status_code)
+        self.assertEqual(
+            'negative transaction aborted: not enough points available',
+            ex.detail
+        )
+
+    def test_post_users_transactions_reject_negative_trans_if_earlier(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='foo corp',
+            points=-100,
+            timestamp='2022-05-05T05:05:04Z'  # earlier
         )
 
         with self.assertRaises(Exception) as context:

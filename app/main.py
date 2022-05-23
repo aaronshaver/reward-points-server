@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+from re import U
 from fastapi import FastAPI, HTTPException
 
 from .user import User
@@ -87,26 +88,34 @@ def post_users_userid_transactions(user_id: str, transaction: Transaction):
         if points_available + transaction.points < 0:
             raise HTTPException(
                 status_code=400,
-                detail="negative transaction aborted: not enough points available"
+                detail="negative transaction aborted: not enough points "
+                "available"
             )
-        # all_transactions = users[user_id].transactions
-        # payer_transactions =
+        payer_transactions = [x for x in users[user_id].transactions
+                              if x.payer == payer]
+        left_to_deduct = transaction.points * -1
+        transactions_to_delete = []
+        for old_transaction in payer_transactions:
+            if left_to_deduct == 0:
+                break
+            if old_transaction.timestamp < transaction.timestamp:
+                # deduct all points from this transaction
+                if left_to_deduct >= old_transaction.points:
+                    # spend_deduction = transaction_amount_available
+                    left_to_deduct -= old_transaction.points
+                    transactions_to_delete.append(old_transaction)
+        if left_to_deduct > 0:
+            raise HTTPException(
+                status_code=400,
+                detail="negative transaction aborted: not enough points "
+                "available"
+            )
+        for to_delete in transactions_to_delete:
+            users[user_id].transactions.remove(to_delete)
+        # remember transaction.points is negative in this case
+        users[user_id].payer_points[payer] = points_available + transaction.points
+
         return transaction
-
-
-@app.get("/users/{user_id}/transactions", status_code=200)
-def get_users_userid_transactions(user_id: str):
-    """
-    -returns transactions for a given user_id
-    -not used in the app itself; however, useful for debugging
-    """
-    if user_id in users:
-        return users[user_id].transactions
-    else:
-        raise HTTPException(
-            status_code=404,
-            detail="user not found"
-        )
 
 
 @app.post("/users/{user_id}/points", status_code=200)
@@ -173,3 +182,18 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
             existing_amount + payer_spend['points']
 
     return spent_amounts
+
+
+@app.get("/users/{user_id}/transactions", status_code=200)
+def get_users_userid_transactions(user_id: str):
+    """
+    -returns transactions for a given user_id
+    -not used in the app itself; however, useful for debugging
+    """
+    if user_id in users:
+        return users[user_id].transactions
+    else:
+        raise HTTPException(
+            status_code=404,
+            detail="user not found"
+        )
