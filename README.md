@@ -43,9 +43,11 @@ Workflow example:
 * I hadn't used FastAPI before (I used to use Flask), but I read it was a great
  new REST framework so I decided to learn it
 * It didn't feel right not having users in the system, so I implemented
- rudimentary user creation/retrieval logic
+ rudimentary user creation/retrieval logic. This came in handy when doing manual
+ integration testing in Postman: I could get a fresh environment by simply
+ creating a new user instead of restarting the whole server.
 * Initially I thought the problem was simple enough, and I'd try to keep things
- simple, by using plain Python objects for everything. Partway through, I
+ simple by using plain Python objects for everything. Partway through, I
  realized using a database (even something lightweight like SQLite) and a basic
  ORM would have made things MUCH easier, particularly sorting and filtering
  transactions. It would be a case of "use slightly more tooling and make
