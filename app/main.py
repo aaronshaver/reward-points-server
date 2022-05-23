@@ -102,49 +102,49 @@ def post_users_userid_points(user_id: str, spend_request: SpendRequest):
             status_code=400,
             detail="unsupported points spending amount; please spend 1 point or more"
         )
-    left_to_spend = spend_request.points
     total_points_available = sum(users[user_id].points.payer_points.values())
     if spend_request.points > total_points_available:
         raise HTTPException(
             status_code=400,
             detail="spend aborted: not enough points available"
         )
-    else:
-        transactions = users[user_id].points.transactions
-        payer_spends = []
-        transactions_to_delete = []
-        for transaction in transactions:
-            if left_to_spend == 0:
-                break
-            payer = transaction.payer
-            transaction_amount_available = transaction.points
-            # spend all points from this transaction
-            if left_to_spend >= transaction_amount_available:
-                spend_deduction = transaction_amount_available
-                transactions_to_delete.append(transaction)
-            # spend partial points, because trans. had more than we needed
-            else:
-                transaction.points -= left_to_spend
-                spend_deduction = left_to_spend
-            left_to_spend -= spend_deduction
-            payer_spend = {}
-            payer_spend['payer'] = payer
-            payer_spend['points'] = spend_deduction * -1
-            payer_spends.append(payer_spend)
-        for transaction in transactions_to_delete:
-            users[user_id].points.transactions.remove(transaction)
 
-        spent_amounts = []
-        for payer_spend in payer_spends:
-            existing_payer = [x for x in spent_amounts if x['payer'] == \
-                payer_spend['payer']]
-            if existing_payer:
-                existing_payer['points'] -= payer_spend['points']
-            else:
-                spent_amounts.append({'payer': payer_spend['payer'], \
-                    'points': payer_spend['points']})
-            existing_amount = users[user_id].points.payer_points[payer_spend['payer']]
-            users[user_id].points.payer_points[payer_spend['payer']] = \
-                existing_amount + payer_spend['points']
+    left_to_spend = spend_request.points
+    transactions = users[user_id].points.transactions
+    payer_spends = []
+    transactions_to_delete = []
+    for transaction in transactions:
+        if left_to_spend == 0:
+            break
+        payer = transaction.payer
+        transaction_amount_available = transaction.points
+        # spend all points from this transaction
+        if left_to_spend >= transaction_amount_available:
+            spend_deduction = transaction_amount_available
+            transactions_to_delete.append(transaction)
+        # spend partial points, because trans. had more than we needed
+        else:
+            transaction.points -= left_to_spend
+            spend_deduction = left_to_spend
+        left_to_spend -= spend_deduction
+        payer_spend = {}
+        payer_spend['payer'] = payer
+        payer_spend['points'] = spend_deduction * -1
+        payer_spends.append(payer_spend)
+    for transaction in transactions_to_delete:
+        users[user_id].points.transactions.remove(transaction)
 
-        return spent_amounts
+    spent_amounts = []
+    for payer_spend in payer_spends:
+        existing_payer = [x for x in spent_amounts if x['payer'] == \
+            payer_spend['payer']]
+        if existing_payer:
+            existing_payer['points'] -= payer_spend['points']
+        else:
+            spent_amounts.append({'payer': payer_spend['payer'], \
+                'points': payer_spend['points']})
+        existing_amount = users[user_id].points.payer_points[payer_spend['payer']]
+        users[user_id].points.payer_points[payer_spend['payer']] = \
+            existing_amount + payer_spend['points']
+
+    return spent_amounts
