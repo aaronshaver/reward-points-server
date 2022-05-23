@@ -98,7 +98,34 @@ class Tests(unittest.TestCase):
 
         self.assertEqual(200, payer_points)
 
+    def test_post_users_transactions_basic_negative_transaction(self):
+        response = post_users()
+        user_id = response.user_id
+
+        transaction = Transaction(
+            payer='foo corp',
+            points=100,
+            timestamp='2022-05-05T05:05:05Z'
+        )
+        post_users_userid_transactions(user_id, transaction)
+        transaction = Transaction(
+            payer='foo corp',
+            points=-100,
+            timestamp='2022-05-05T05:05:06Z'  # later
+        )
+        post_users_userid_transactions(user_id, transaction)
+
+        response2 = get_users_userid_points(user_id)
+        all_payer_points = response2
+        payer_points = all_payer_points['foo corp']
+        self.assertEqual(0, payer_points)
+
+        response3 = get_users_userid_transactions(user_id)
+        all_transactions = response2
+        self.assertEqual(0, len(all_transactions))
+
     # spend tests
+
     def test_post_users_userid_points_simple_spend_all(self):
         response = post_users()
         user_id = response.user_id
@@ -289,4 +316,3 @@ class Tests(unittest.TestCase):
         all_payer_points = response2
         self.assertEqual(0, all_payer_points['aaron corp'])
         self.assertEqual(100, all_payer_points['shaver corp'])
-
