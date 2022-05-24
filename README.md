@@ -21,10 +21,10 @@ https://www.docker.com/get-started/
  below
 1. Run unit tests: without starting the container (i.e. outside the container on
 your localhost):
-  1. Install Python 3.10: https://www.python.org/downloads/
-  2. It should install PIP (package manager) but if not: follow instructions for your platform here: https://pip.pypa.io/en/stable/installation/
-  3. In the root of the project directory, `pip install --no-cache-dir --upgrade -r ./requirements.txt`
-  4. `python3 -m unittest discover app/.`
+    1. Install Python 3.10: https://www.python.org/downloads/
+    2. It should install PIP (package manager) but if not: follow instructions for your platform here: https://pip.pypa.io/en/stable/installation/
+    3. In the root of the project directory, `pip install --no-cache-dir --upgrade -r ./requirements.txt`
+    4. `python3 -m unittest discover app/.`
 1. If for some reason the unit tests won't work on your environment, or you simply prefer to not modify your environment, you can
 comment out (with `#` hash sign) that last CMD line in the Dockerfile, rebuild
 the image and then do: `docker run -it rewardpoints /bin/bash` to run them
