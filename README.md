@@ -27,8 +27,7 @@ your localhost):
     4. `python3 -m unittest discover app/.`
 1. If for some reason the unit tests won't work on your environment, or you simply prefer to not modify your environment, you can
 comment out (with `#` hash sign) that last CMD line in the Dockerfile, rebuild
-the image and then do: `docker run -it rewardpoints /bin/bash` to run them
-inside the pristine Docker environment
+the image (`docker build -t rewardpoints .`) and then do: `docker run -it rewardpoints /bin/bash` to run them (`python3 -m unittest discover app/.`) inside the pristine Docker environment
 1. View the generated API docs: `http://localhost/docs`
 
 ## API usage / workflow example
